@@ -1,0 +1,14 @@
+<ion-view view-title="Eventos">
+  <ion-content class="padding">
+    <ion-list>
+      <ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="evento in eventos" type="item-text-wrap" href="#/tab/eventos/{{evento.id}}/periodos">
+        <img ng-src="{{evento.img}}">
+        <h2>{{evento.nome}}</h2>
+        <i class="icon ion-chevron-right icon-accessory"></i>
+        <!-- href="#/tab/eventos/{{evento.id}}" -->
+        <ion-option-button class="button-calm" ng-click="detalhes(evento.id)">Detalhes</ion-option-button>
+        <ion-option-button class="button-assertive" ng-click="remove(evento)">Remover</ion-option-button>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-view>

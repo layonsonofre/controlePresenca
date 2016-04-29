@@ -1,0 +1,16 @@
+<!--
+  This template loads for the 'tab.friend-detail' state (app.js)
+  'friend' is a $scope variable created in the FriendsCtrl controller (controllers.js)
+  The FriendsCtrl pulls data from the Friends service (service.js)
+  The Friends service returns an array of friend data
+-->
+<ion-view view-title="Escolha o Período">
+  <ion-content>
+    <ion-list>
+      <!-- href="#/tab/eventos/{{evento.id}}/{{periodo.id}}/ler" -->
+      <ion-item class="item-remove-animate item-icon-right" ng-repeat="periodo in periodos" type="item-text-wrap" ng-click="scanBarcode()">
+        {{periodo.data}}</b> - <b>{{periodo.horarioInicio}}</b> até <b>{{periodo.horarioFim}}</b>: {{periodo.descricao}}
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-view>
