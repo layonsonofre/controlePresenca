@@ -3,7 +3,7 @@ module.exports = function(server, db) {
 
   /*
   //Exemplo da collection
-  db.controlePresenca {
+  db.controlePresenca.insert({
     _id: 1,
     nome: 'Semana da Física',
     ano: 2016,
@@ -11,21 +11,51 @@ module.exports = function(server, db) {
     usuario: 'layonsonofre@gmail.com',
     senha: 'senhacriptografadacombcrypt',
     periodos: [
-      { periodo_id: 1, data: '15/15/2015', hora_inicio: '19h10', hora_fim: '20h00', descricao: 'Palestra do Reitor' },
-      { periodo_id: 2, data: '15/15/2015', hora_inicio: '20h10', hora_fim: '21h00', descricao: 'Palestra da EJEC' }
-    ],
-    presencas: [
-      { periodo_id: 1, part_id: 1, part_nome: 'Layon de Souza Onofre', part_tipo: 'ouvinte' },
-      { periodo_id: 1, part_id: 2, part_nome: 'Onofre de Layon Souza', part_tipo: 'ouvinte' },
-      { periodo_id: 1, part_id: 3, part_nome: 'Souza de Onofre Layon', part_tipo: 'organizador' },
-      { periodo_id: 1, part_id: 4, part_nome: 'de Onofre Souza Layon', part_tipo: 'ouvinte' },
-
-      { periodo_id: 2, part_id: 3, part_nome: 'Souza de Onofre Layon', part_tipo: 'organizador' },
-      { periodo_id: 2, part_id: 2, part_nome: 'Onofre de Layon Souza', part_tipo: 'ouvinte' },
-      { periodo_id: 2, part_id: 1, part_nome: 'Layon de Souza Onofre', part_tipo: 'ouvinte' },
-      { periodo_id: 2, part_id: 4, part_nome: 'de Onofre Souza Layon', part_tipo: 'ouvinte' }
+      { periodo_id: 1, data: '15/15/2015', hora_inicio: '19h10', hora_fim: '20h00', descricao: 'Palestra do Reitor',
+        presencas: [
+          { part_id: 2, part_nome: 'Onofre de Layon Souza', part_tipo: 'ouvinte' },
+          { part_id: 1, part_nome: 'Layon de Souza Onofre', part_tipo: 'ouvinte' },
+          { part_id: 3, part_nome: 'Souza de Onofre Layon', part_tipo: 'organizador' },
+          { part_id: 4, part_nome: 'de Onofre Souza Layon', part_tipo: 'ouvinte' },
+        ]
+      },
+      { periodo_id: 2, data: '15/15/2015', hora_inicio: '20h10', hora_fim: '21h00', descricao: 'Palestra da EJEC',
+        presencas: [
+          { part_id: 3, part_nome: 'Souza de Onofre Layon', part_tipo: 'organizador' },
+          { part_id: 2, part_nome: 'Onofre de Layon Souza', part_tipo: 'ouvinte' },
+          { part_id: 1, part_nome: 'Layon de Souza Onofre', part_tipo: 'ouvinte' },
+          { part_id: 4, part_nome: 'de Onofre Souza Layon', part_tipo: 'ouvinte' }
+        ]
+      }
     ]
-  }
+  })
+
+  db.controlePresenca.insert({
+    _id: 2,
+    nome: 'I Semana de Integracao da Tecnologia e Empreendedorismo',
+    ano: 2015,
+    img: '/path/to/image.format',
+    usuario: 'layonsonofre@outlook.com',
+    senha: 'senhacriptografadacombcrypt',
+    periodos: [
+      { periodo_id: 1, data: '30/30/2015', hora_inicio: '10h50', hora_fim: '12h00', descricao: 'Palestra do Ariangelo',
+        presencas: [
+          { part_id: 2, part_nome: 'Qwerty2', part_tipo: 'ouvinte' },
+          { part_id: 1, part_nome: 'Qwerty1', part_tipo: 'ouvinte' },
+          { part_id: 3, part_nome: 'Qwerty3', part_tipo: 'organizador' },
+          { part_id: 4, part_nome: 'Qwerty4', part_tipo: 'ouvinte' },
+        ]
+      },
+      { periodo_id: 2, data: '30/30/2015', hora_inicio: '12h10', hora_fim: '14h00', descricao: 'Palestra do Centro Acadêmico',
+        presencas: [
+          { part_id: 3, part_nome: 'Qwerty3', part_tipo: 'organizador' },
+          { part_id: 2, part_nome: 'Qwerty2', part_tipo: 'ouvinte' },
+          { part_id: 1, part_nome: 'Qwerty1', part_tipo: 'ouvinte' },
+          { part_id: 4, part_nome: 'Qwerty4', part_tipo: 'ouvinte' }
+        ]
+      }
+    ]
+  })
   */
   /*
   operacoes
@@ -83,7 +113,7 @@ module.exports = function(server, db) {
       db.controlePresenca.find({
         _id: db.ObjectId(req.params.id)
       }, {
-        _id: 0, periodos: 1
+        "periodos.presencas": 1
       }, function(err, data) {
         res.writeHead(200, {
           'Content-Type': 'application/json; charset=utf-8'
@@ -133,8 +163,9 @@ module.exports = function(server, db) {
       var item = req.params;
       db.controlePresenca.update({
         _id: db.ObjectId(item._id),
+        "periodos.periodo_id": { $in: [ item.periodo_id ] }
       }, {
-        $push: { presencas: item.presenca }
+        $push: { "periodos.$.presencas": item.presenca }
       }, function(err, data) {
           res.writeHead(200, {
             'Content-Type': 'application/json; charset=utf-8'
@@ -166,7 +197,7 @@ module.exports = function(server, db) {
       db.controlePresenca.remove({
         _id: db.ObjectId(req.params._id)
       }, {
-        $pull: { periodos: req.params.periodo_id }
+        $pull: { periodos: { periodo_id: req.params.periodo_id } }
       }, function(err, data) {
         res.writeHead(200, {
           'Content-Type': 'application/json; charset=utf-8'
