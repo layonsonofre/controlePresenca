@@ -1,53 +1,33 @@
 var pwdMgr = require('./managePasswords');
 
 module.exports = function(server, db) {
-  db.appUsers.ensureIndex({
+  db.usuarios.ensureIndex({
     email: 1
   }, {
     unique: true
   })
 
-  server.post('/controlePresenca/auth/register', function(req, res, next) {
-    var user = req.params;
-    pwdMgr.cryptPassword(user.password, function(err, hash) {
-      user.password = hash;
-      console.log("n", hash);
-      db.appUsers.insert(user,
-        function(err, dbUser) {
-          if (err) { // duplicate key error
-            if (err.code == 11000) /* http://www.mongodb.org/about/contributors/error-codes/*/ {
-              res.writeHead(400, {
-                'Content-Type': 'application/json; charset=utf-8'
-              });
-              res.end(JSON.stringify({
-                error: err,
-                message: "Um usuário com este email já existe"
-              }));
-            }
-          } else {
-            res.writeHead(200, {
-              'Content-Type': 'application/json; charset=utf-8'
-            });
-            dbUser.password = "";
-            res.end(JSON.stringify(dbUser));
-          }
-        });
-    });
-    return next();
-  });
-
   server.post('/controlePresenca/auth/login', function(req, res, next) {
     var user = req.params;
-    if (user.email.trim().length == 0 || user.password.trim().length == 0) {
-      res.writeHead(403, {
-        'Content-Type': 'application/json; charset=utf-8'
-      });
-      res.end(JSON.stringify({
-        error: "Credenciais inválidas"
-      }));
-    }
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8'
+    });
+    res.end(JSON.stringify({
+      'debug': true,
+      'email': user.email
+    }));
+    return next();
+
+    // if (user.email.trim().length == 0 || user.senha.trim().length == 0) {
+    //   res.writeHead(403, {
+    //     'Content-Type': 'application/json; charset=utf-8'
+    //   });
+    //   res.end(JSON.stringify({
+    //     error: "Credenciais inválidas"
+    //   }));
+    // }
     console.log("in");
-    db.appUsers.findOne({
+    db.usuarios.findOne({
       email: req.params.email
     }, function(err, dbUser) {
       pwdMgr.comparePassword(user.password, dbUser.password, function(err, isPasswordMatch) {
@@ -67,6 +47,36 @@ module.exports = function(server, db) {
           }));
         }
       });
+    });
+    return next();
+  });
+
+  server.post('/controlePresenca/auth/register', function(req, res, next) {
+    var user = req.params;
+
+    pwdMgr.cryptPassword(user.senha, function(err, hash) {
+      user.senha = hash;
+      console.log("n", hash);
+      db.usuarios.insert(user,
+        function(err, dbUser) {
+          if (err) { // duplicate key error
+            if (err.code == 11000) /* http://www.mongodb.org/about/contributors/error-codes/*/ {
+              res.writeHead(400, {
+                'Content-Type': 'application/json; charset=utf-8'
+              });
+              res.end(JSON.stringify({
+                error: err,
+                message: "Um usuário com este email já existe"
+              }));
+            }
+          } else {
+            res.writeHead(200, {
+              'Content-Type': 'application/json; charset=utf-8'
+            });
+            dbUser.password = "";
+            res.end(JSON.stringify(dbUser));
+          }
+        });
     });
     return next();
   });

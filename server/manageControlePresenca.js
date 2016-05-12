@@ -1,5 +1,5 @@
 module.exports = function(server, db) {
-  var validateRequest = require("../auth/validateRequest");
+  var validateRequest = require("./auth/validateRequest");
 
   /*
   //Exemplo da collection
@@ -8,7 +8,8 @@ module.exports = function(server, db) {
     nome: 'Semana da Física',
     ano: 2016,
     img: '/path/to/image.format',
-    usuario: 'layonsonofre@gmail.com',
+    email: 'layonsonofre@gmail.com',
+    nomeUsuario: 'Layon de Souza Onofre',
     senha: 'senhacriptografadacombcrypt',
     periodos: [
       { periodo_id: 1, data: '15/15/2015', hora_inicio: '19h10', hora_fim: '20h00', descricao: 'Palestra do Reitor',
@@ -125,7 +126,7 @@ module.exports = function(server, db) {
   });
 
   //criar evento
-  server.post('/controlePresenca/evento/:id', function(req, res, next) {
+  server.post('/controlePresenca/evento', function(req, res, next) {
     validateRequest.validate(req, res, db, function() {
       var evento = req.params;
       db.controlePresenca.insert(evento,

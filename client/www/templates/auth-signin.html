@@ -1,0 +1,19 @@
+<ion-view title="Acessar meus eventos">
+  <ion-content class="has-header padding">
+    <div class="list">
+      <label class="item item-input">
+        <span class="input-label">Email</span>
+        <input type="text" ng-model="user.email">
+      </label>
+      <label class="item item-input">
+        <span class="input-label">Senha</span>
+        <input type="password" ng-model="user.senha">
+      </label>
+      <label class="item item-input">
+        <button class="button button-block button-positive" ng-click="validateUser()">
+          Acessar
+        </button>
+      </label>
+    </div>
+  </ion-content>
+</ion-view>
