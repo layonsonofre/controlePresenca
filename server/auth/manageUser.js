@@ -1,83 +1,64 @@
 var pwdMgr = require('./managePasswords');
+var express = require('express');
+var server = express();
+var config = require('../config/database');
+var mongoose = require('mongoose');
+var passport = require('passport');
+var Usuario = require('../models/usuario');
+var jwt = require('jwt-simple');
 
-module.exports = function(server, db) {
-  db.usuarios.ensureIndex({
-    email: 1
-  }, {
-    unique: true
-  })
+mongoose.connect(config.database);
+require('../config/passport')(passport);
 
-  server.post('/controlePresenca/auth/login', function(req, res, next) {
-    var user = req.params;
-    res.writeHead(200, {
+var router = express.Router();
+
+router.post('/controlePresenca/auth/register', function(req, res) {
+  if (!req.body.email || !req.body.senha) {
+    res.writeHead(403, {
       'Content-Type': 'application/json; charset=utf-8'
     });
     res.end(JSON.stringify({
-      'debug': true,
-      'email': user.email
+      error: "Por favor, informe um nome, email e senha"
     }));
-    return next();
+  } else {
+    var newUser = new Usuario({
+      nome: req.body.nome,
+      senha: req.body.senha,
+      email: req.body.email
+    });
+    newUser.save(function(err) {
+      if (err) {
+        if (err.code == 11000) { // http://www.mongodb.org/about/contributors/error-codes/
+          res.json({
+            error: err,
+            message: "Um usuário com este email já existe"
+          });
+        }
+      }
+      res.json({ success: true, message: 'Usuário cadastrado com maestria'});
+    });
+  }
+});
 
-    // if (user.email.trim().length == 0 || user.senha.trim().length == 0) {
-    //   res.writeHead(403, {
-    //     'Content-Type': 'application/json; charset=utf-8'
-    //   });
-    //   res.end(JSON.stringify({
-    //     error: "Credenciais inválidas"
-    //   }));
-    // }
-    console.log("in");
-    db.usuarios.findOne({
-      email: req.params.email
-    }, function(err, dbUser) {
-      pwdMgr.comparePassword(user.password, dbUser.password, function(err, isPasswordMatch) {
-        if (isPasswordMatch) {
-          res.writeHead(200, {
-            'Content-Type': 'application/json; charset=utf-8'
-          });
-          // remove password hash before sending to the client
-          dbUser.password = "";
-          res.end(JSON.stringify(dbUser));
+router.post('/controlePresenca/auth/login', function(req, res) {
+  Usuario.findOne({
+    email: req.body.email
+  }, function(err, user) {
+    if (err) throw err;
+    if (!user) {
+      res.send({success: false, message: 'Falha na autenticação: usuário não encontrado'});
+    } else {
+      user.comparePassword(req.body.senha, function (err, isMatch) {
+        if(isMatch && !err) {
+          var token = jwt.encode(user, config.secret);
+          res.json({success: true, token: 'JWT ' + token});
         } else {
-          res.writeHead(403, {
-            'Content-Type': 'application/json; charset=utf-8'
-          });
-          res.end(JSON.stringify({
-            error: "Usuário inválido"
-          }));
+          res.send({success: false, message: 'Falha na autenticação: senha errada'});
         }
       });
-    });
-    return next();
-  });
+    }
+  }
+  );
+});
 
-  server.post('/controlePresenca/auth/register', function(req, res, next) {
-    var user = req.params;
-
-    pwdMgr.cryptPassword(user.senha, function(err, hash) {
-      user.senha = hash;
-      console.log("n", hash);
-      db.usuarios.insert(user,
-        function(err, dbUser) {
-          if (err) { // duplicate key error
-            if (err.code == 11000) /* http://www.mongodb.org/about/contributors/error-codes/*/ {
-              res.writeHead(400, {
-                'Content-Type': 'application/json; charset=utf-8'
-              });
-              res.end(JSON.stringify({
-                error: err,
-                message: "Um usuário com este email já existe"
-              }));
-            }
-          } else {
-            res.writeHead(200, {
-              'Content-Type': 'application/json; charset=utf-8'
-            });
-            dbUser.password = "";
-            res.end(JSON.stringify(dbUser));
-          }
-        });
-    });
-    return next();
-  });
-};
+module.exports = router;

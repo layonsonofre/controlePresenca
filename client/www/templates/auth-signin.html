@@ -1,19 +1,26 @@
-<ion-view title="Acessar meus eventos">
-  <ion-content class="has-header padding">
-    <div class="list">
-      <label class="item item-input">
-        <span class="input-label">Email</span>
-        <input type="text" ng-model="user.email">
-      </label>
-      <label class="item item-input">
-        <span class="input-label">Senha</span>
-        <input type="password" ng-model="user.senha">
-      </label>
-      <label class="item item-input">
-        <button class="button button-block button-positive" ng-click="validateUser()">
-          Acessar
-        </button>
-      </label>
+<ion-view view-title="Acessar meus eventos" align-title="left">
+  <!-- <ion-content style="background: url(img/background.jpg) center; background-size: cover;"> -->
+  <!-- <ion-content style="background-color: #121214;" > -->
+  <ion-content style="background-color: #444;" >
+    <div class="hero no-header flat">
+      <div class="content">
+        <!-- <div class="app-icon"></div> -->
+        <img src="../img/logo.png" class="app-icon" alt="EJEC | Empresa Júnior de Engenharia de Computação">
+        <h1>Controle de Presença</h1>
+      </div>
     </div>
+      <div class="list padding">
+        <ion-md-input placeholder="Email" highlight-color="balanced" type="text" ng-model="usuario.email"></ion-md-input>
+        <ion-md-input placeholder="Senha" highlight-color="energized" type="password" ng-model="usuario.senha"></ion-md-input>
+      </div>
+      <div class="padding">
+        <button class="button button-full button-balanced ink" ng-click="login()">Acessar</button>
+        <button class="button button-light button-clear button-full" ui-sref="auth.register">Quero me cadastrar</button>
+      </div>
+      <!-- <div class="button-bar social-login">
+        <button class="button button-small button-border icon-left ion-social-google button-assertive-900">Google+</button>
+        <button class="button button-small button-border icon-left ion-social-twitter button-calm-900">Twitter</button>
+        <button class="button button-small button-border icon-left ion-social-facebook button-positive-900">Facebook</button>
+      </div> -->
   </ion-content>
 </ion-view>

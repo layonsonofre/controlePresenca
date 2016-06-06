@@ -1,27 +1,30 @@
-var restify = require('restify');
-var mongojs = require('mongojs');
-var morgan = require('morgan');
-var db = mongojs('controlepresenca', ['usuarios', 'controlePresenca']);
-var server = restify.createServer();
-var manageUsers = require('./auth/manageUser')(server, db);
-var managePresencas = require('./manageControlePresenca')(server, db);
+var express = require('express');
+var bodyParser = require('body-parser');
+var config = require('./config/database');
+var passport = require('passport');
+var server = express();
+var manageUsers = require('./auth/manageUser');
+var managePresencas = require('./manageControlePresenca');
+var port = process.env.PORT || 9804;
 
-// server.pre(restify.pre.sanitizePath());
+server.use(passport.initialize());
 
-server.use(restify.gzipResponse());
-server.use(restify.acceptParser(server.acceptable));
-server.use(restify.queryParser());
-server.use(restify.bodyParser({ mapParams: false }));
-server.use(morgan('controlePresenca'));
+server.use(bodyParser.json());
+server.use(bodyParser.urlencoded({ extended: false }));
 
-// CORS
 server.use(function(req, res, next) {
-  res.header('Access-Control-Allow-Origin', "*");
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Credentials", "true");
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   next();
 });
 
-server.listen(process.env.PORT || 9804, function() {
-  console.log("Servidor rodando @ ", process.env.PORT || 9804);
+server.use(manageUsers);
+server.use(managePresencas);
+
+server.listen(port, function() {
+  console.log("Servidor rodando @", port);
 });
+
+module.exports = server;
