@@ -3,7 +3,7 @@ var bodyParser = require('body-parser');
 var config = require('./config/database');
 var passport = require('passport');
 var server = express();
-var manageUsers = require('./auth/manageUser');
+var manageUsers = require('./manageUser');
 var managePresencas = require('./manageControlePresenca');
 var port = process.env.PORT || 9804;
 

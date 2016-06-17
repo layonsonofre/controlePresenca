@@ -1,9 +1,13 @@
-var validateRequest = require("./auth/validateRequest");
 var express = require('express');
+var server = express();
+var manageUser = require('./manageUser');
+var config = require('./config/database');
+var Usuario = require('./models/usuario');
+var Evento = require('./models/evento');
+var passport = require('passport');
 var router = express.Router();
-var mongojs = require('mongojs');
-var db = mongojs('controlepresenca', ['usuarios', 'controlePresenca']);
-
+var jwt = require('jwt-simple');
+require('./config/passport')(passport);
 /*
 //Exemplo da collection
 db.controlePresenca.insert({
@@ -79,35 +83,40 @@ del
   periodo
 */
 
-//listar eventos do usuario
-router.get("/controlePresenca/evento", function(req, res) {
-  console.log(req.params);
-  validateRequest.validate(req, res, db, function() {
-    db.controlePresenca.find({
-      email: req.params.email
+//listar eventos do usuario - ok
+router.get("/controlePresenca/evento", passport.authenticate('jwt', { session: false }), function(req, res) {
+  var token = getToken(req.headers);
+  if (token) {
+    var decode = jwt.decode(token, config.secret);
+    Evento.find({
+      usuario: decode._id
     }, {
-      _id:1, nome:1, ano:1, img:1
-    }, function(err, list) {
-      res.writeHead(200, {
-        'Content-Type': 'application/json; charset=utf-8'
-      });
-      res.end(JSON.stringify(list));
+      _id:1, nome:1, dataInicio:1, dataFim:1
+    }, function(err, list){
+      console.log(list);
+      if (err) throw err;
+      res.status(200).json(list);
     });
-  });
+  } else {
+    return res.status(403).send({success: false, message: 'Nenhum token fornecido'});
+  }
 });
 
-//relatorio evento
+//relatorio evento - ok
 router.get('/controlePresenca/evento/detalhes/:id', function(req, res) {
-  validateRequest.validate(req, res, db, function() {
-    db.controlePresenca.find({
-      _id: db.ObjectId(req.params.id)
+  var token = getToken(req.headers);
+  if (token) {
+    var decode = jwt.decode(token, config.secret);
+    Evento.find({
+      _id: req.params.id
     }, function(err, data) {
-      res.writeHead(200, {
-        'Content-Type': 'application/json; charset=utf-8'
-      });
-      res.end(JSON.stringify(data));
+      if (err) throw err;
+      console.log(data[0]);
+      res.json(data[0]);
     });
-  });
+  } else {
+    return res.status(403).send({success: false, message: 'Nenhum token fornecido'});
+  }
 });
 
 //lista de periodos
@@ -126,22 +135,31 @@ router.get('/controlePresenca/evento/periodos/:id', function(req, res) {
   });
 });
 
-//criar evento
-router.post('/controlePresenca/evento', function(req, res) {
-  validateRequest.validate(req, res, db, function() {
-    var evento = req.params;
-    db.controlePresenca.insert(evento,
-      function(err, data) {
-        res.writeHead(200, {
-          'Content-Type': 'application/json; charset=utf-8'
-        });
-        res.end(JSON.stringify(data));
-      });
-  });
+//criar evento - ok
+router.post('/controlePresenca/evento', passport.authenticate('jwt', { session: false }), function(req, res) {
+  var token = getToken(req.headers);
+  if (token && req.body.nome && req.body.dataInicio && req.body.dataFim) {
+    var decode = jwt.decode(token, config.secret);
+    var evento = new Evento({
+      nome: req.body.nome,
+      dataInicio: req.body.dataInicio,
+      dataFim: req.body.dataFim,
+      usuario: decode._id
+    });
+    console.log(evento);
+    evento.save(function(err){
+      if (err) {
+        res.json({ success: false, message: 'Evento não cadastrado'});
+      }
+      res.json({ success: true, message: 'Evento cadastrado com maestria'});
+    });
+  } else {
+    return res.status(403).send({success: false, message: 'Nenhum token fornecido'});
+  }
 });
 
 //criar períodos
-router.post('/controlePresenca/evento/periodo/:id', function(req, res) {
+router.post('/controlePresenca/evento/periodo', function(req, res) {
   validateRequest.validate(req, res, db, function() {
     var item = req.params;
     db.controlePresenca.update({
@@ -206,5 +224,18 @@ router.delete('/controlePresenca/evento/periodo/:id', function(req, res) {
     return next();
   });
 });
+
+getToken = function(headers) {
+  if (headers && headers.authorization) {
+    var parted = headers.authorization.split(' ');
+    if (parted.length === 2) {
+      return parted[1];
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
 
 module.exports = router;
